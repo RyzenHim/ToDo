@@ -89,7 +89,7 @@ const EditTaskModal = ({
         if (!confirmDelete) return;
 
         try {
-            await app.delete(
+            await api.delete(
                 `/user/deletetask/${task._id}`,
                 {
                     headers: {
