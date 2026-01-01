@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from '../../api/axios'
 
 const SignUp = () => {
     const navigate = useNavigate()
@@ -11,7 +12,7 @@ const SignUp = () => {
     const handleSignup = async () => {
         const signupdata = { name, email, password }
 
-        const postSignUpData = await axios.post('http://localhost:8080/user/signup', signupdata)
+        const postSignUpData = await api.post('/user/signup', signupdata)
         alert('Signup Completed Please login')
         navigate('/user/login')
 

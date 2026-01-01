@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import api from '../../api/axios'
 const Login = () => {
     const navigate = useNavigate()
     const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ const Login = () => {
 
         const loginData = { email, password }
         try {
-            const postData = await axios.post('http://localhost:8080/user/login', loginData)
+            const postData = await api.post('/user/login', loginData)
             localStorage.setItem('token', postData.data.token)
             navigate('/')
         } catch (error) {
@@ -19,6 +20,7 @@ const Login = () => {
         }
     }
 
+    console.log("API BASE:", import.meta.env.VITE_API_BASE_URL);
 
     return (
         <div className="w-full">
