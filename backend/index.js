@@ -6,7 +6,16 @@ require('dotenv').config()
 const port = process.env.PORT || 9090
 
 
-app.use(cors())
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",              // local frontend
+      "https://todo-frontend-vexg.onrender.com" // deployed frontend
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json())
 
 mongoose
