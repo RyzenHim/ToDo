@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EditProfileModal from "./myProfile/EditProfileModal";
-
+import api from '../api/axios'
 const Profile = () => {
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
@@ -19,7 +19,7 @@ const Profile = () => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:8080/user/profile", {
+                const res = await api.get("/user/profile", {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

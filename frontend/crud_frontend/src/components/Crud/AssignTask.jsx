@@ -1,5 +1,8 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import api from "../../api/axios";
+
+// api.post("/user/login", data);
 
 const AssignTask = () => {
     const bgRef = useRef(null);
@@ -41,7 +44,7 @@ const AssignTask = () => {
     /* ---------------- FETCH USERS ---------------- */
     const fetchUsers = async () => {
         try {
-            const res = await axios.get("http://localhost:8080/user/all", {
+            const res = await api.get("/user/all", {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
@@ -73,8 +76,8 @@ const AssignTask = () => {
         };
 
         try {
-            await axios.post(
-                "http://localhost:8080/user/assigntask",
+            await api.post(
+                "/user/assigntask",
                 submitData,
                 {
                     headers: {

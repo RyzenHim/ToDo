@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-
+import api from '../api/axios'
 const Pracctice = () => {
     const [loading, setLoading] = useState(true);
     const [loggedInUser, setLoggedInUser] = useState('')
@@ -20,7 +20,7 @@ const Pracctice = () => {
     useEffect(() => {
 
         const fetchfunction = async () => {
-            const fetchData = await axios.get('http://localhost:8080/user/practice', {
+            const fetchData = await api.get('/user/practice', {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             }
             )

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from '../api/axios'
 const NavBar = () => {
     const navigate = useNavigate();
     const outSideCloseRef = useRef(null)
@@ -14,7 +15,7 @@ const NavBar = () => {
 
             try {
 
-                const fetchApi = await axios.get('http://localhost:8080/user/profile', {
+                const fetchApi = await api.get('/user/profile', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`
                     }

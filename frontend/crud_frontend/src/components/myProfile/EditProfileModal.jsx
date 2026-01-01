@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from '../../api/axios'
 const EditProfileModal = ({ currentName, onClose, onSuccess, email }) => {
 
     const modalRef = useRef(null);
@@ -47,8 +48,8 @@ const EditProfileModal = ({ currentName, onClose, onSuccess, email }) => {
         }
 
         try {
-            await axios.patch(
-                "http://localhost:8080/user/update",
+            await api.patch(
+                "/user/update",
                 updatedData,
                 {
                     headers: {

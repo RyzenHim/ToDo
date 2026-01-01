@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-
+import api from '../../api/axios'
 const EditTaskModal = ({
     isOpen,
     onClose,
@@ -58,8 +58,8 @@ const EditTaskModal = ({
     /* ================= UPDATE ================= */
     const handleUpdate = async () => {
         try {
-            await axios.patch(
-                `http://localhost:8080/user/updatetask/${task._id}`,
+            await api.patch(
+                `/user/updatetask/${task._id}`,
                 {
                     ...form,
                     dueDate: form.dueDate ? new Date(form.dueDate) : null
@@ -89,8 +89,8 @@ const EditTaskModal = ({
         if (!confirmDelete) return;
 
         try {
-            await axios.delete(
-                `http://localhost:8080/user/deletetask/${task._id}`,
+            await app.delete(
+                `/user/deletetask/${task._id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`

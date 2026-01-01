@@ -4,7 +4,7 @@ import MyTaskSection from "./MyTaskSection";
 import EditTaskModal from "./EditTaskModal";
 import DetailTaskModal from "./DetailTaskModal";
 import moment from "moment";
-
+import api from '../../api/axios'
 const Mytasks = () => {
     const bgRef = useRef(null);
     const glowRef = useRef(null);
@@ -51,8 +51,8 @@ const Mytasks = () => {
     }, []);
     async function fetchData() {
         try {
-            const res = await axios.get(
-                "http://localhost:8080/user/mytasks",
+            const res = await api.get(
+                "/user/mytasks",
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`
