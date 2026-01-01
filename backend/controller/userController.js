@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const secretKey = process.env.SECRET_KEY
 const emailId = process.env.EMAILID
 const passkey = process.env.PASSKEY
+const URL_ATLAS = process.env.URL_ATLAS
 
 exports.signup = async (req, res) => {
     try {

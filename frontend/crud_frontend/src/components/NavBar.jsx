@@ -82,11 +82,10 @@ const NavBar = () => {
                     <NavLink to="/assigntasks" className={linkClass}>
                         Assign Tasks
                     </NavLink>
-                    <NavLink to="/practice" className={linkClass}>
+                    {/* <NavLink to="/practice" className={linkClass}>
                         Practice
-                    </NavLink>
+                    </NavLink> */}
 
-                    {/* PROFILE DROPDOWN */}
                     <div
                         ref={outSideCloseRef}
                         className="relative">

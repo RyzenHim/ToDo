@@ -23,7 +23,7 @@ function App() {
             <Route path='profile' element={<Profile />} />
             <Route path='mytasks' element={<Mytasks />} />
             <Route path='assigntasks' element={<AssignTask />} />
-            <Route path='practice' element={<Pracctice />} />
+            {/* <Route path='practice' element={<Pracctice />} /> */}
           </Route>
 
         </Route>

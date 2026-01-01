@@ -4,13 +4,24 @@ const cors = require('cors')
 const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 9090
+const URL_ATLAS = process.env.URL_ATLAS
 
 
-app.use(cors())
+app.use(
+    cors({
+        origin: [
+            "http://localhost:5173",              // local frontend
+            "https://todo-frontend-vexg.onrender.com" // deployed frontend
+        ],
+        credentials: true,
+    })
+);
+
+
 app.use(express.json())
 
 mongoose
-    .connect(process.env.URL)
+    .connect(URL_ATLAS)
     .then(() => console.log("DB Connected"))
     .catch((err) => console.log(err))
 
