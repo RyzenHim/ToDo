@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const app = express()
 require('dotenv').config()
-const port = process.env.PORT || 9090
+const port = process.env.PORT || 8080
 const URL_ATLAS = process.env.URL_ATLAS
 
 
