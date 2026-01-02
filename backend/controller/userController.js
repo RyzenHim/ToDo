@@ -1,4 +1,3 @@
-const nodeMailer = require('nodemailer')
 const User = require('../model/userModel')
 const AssignTask = require('../model/assignTaskModel')
 const bcrypt = require('bcryptjs')
@@ -7,7 +6,7 @@ const secretKey = process.env.SECRET_KEY
 const emailId = process.env.EMAILID
 const passkey = process.env.PASSKEY
 const URL_ATLAS = process.env.URL_ATLAS
-
+const transporter = require('../utils/mailer')
 exports.signup = async (req, res) => {
     try {
         const { name, email, password } = req.body
@@ -108,25 +107,30 @@ exports.assigntask = async (req, res) => {
             taskDescription
         });
 
-        // const transporter = nodeMailer.createTransport({
-        //     service: 'gmail',
-        //     auth: {
-        //         user: emailId,
-        //         pass: passkey
-        //     }
-        // });
-        // const userSendingMail = req.user.name
-        // const mailIdOfReceipient = await User.findById(assignedTo)
-        // const info = await transporter.sendMail({
-        //     from: `${userSendingMail} <himanshukumar.a2@gmail.com>`,
-        //     to: `${mailIdOfReceipient}`,
-        //     subject: "Task Assigned to u",
-        //     text: "You have been assigned a task!!",
-        //     html: "<h1>Hey u have been assigned a task</h1> "
-        // })
+        const assignedToUser = await User.findById(assignedTo);
+        const assignedByUser = await User.findById(assignedBy);
+
+        if (!assignedToUser || !assignedByUser) {
+            console.error("Mail skipped: user not found");
+        } else {
+            transporter.sendMail({
+                from: `"Task Manager" <${process.env.EMAILID}>`,
+                to: assignedToUser.email,
+                subject: "📌 New Task Assigned",
+                html: `
+                    <h3>New Task Assigned</h3>
+                    <p>Hello <b>${assignedToUser.name}</b>,</p>
+                    <p>You have been assigned a task by <b>${assignedByUser.name}</b>.</p>
+                    <p><b>Title:</b> ${addTask.taskTitle}</p>
+                    <p><b>Urgency:</b> ${addTask.urgency}</p>
+                    <p><b>Due Date:</b> ${new Date(addTask.dueDate).toDateString()}</p>
+                `,
+            })
+                .then(info => console.log("Mail sent:", info.messageId))
+                .catch(err => console.error("Mail Error:", err));
+        }
 
         return res.status(201).json({
-            // message: "Task assigned successfully",
             task: addTask
         });
 
@@ -287,24 +291,25 @@ exports.mytasks = async (req, res) => {
         return res.status(500).json({ message: "Internal server Error" });
     }
 };
-
 exports.updateTask = async (req, res) => {
     try {
         const loggedInUserId = req.user._id;
         const taskId = req.params.id;
         const updatedData = req.body;
 
-        const task = await AssignTask.findById(taskId);
+        const task = await AssignTask.findById(taskId)
+            .populate("assignedTo", "name email")
+            .populate("assignedBy", "name email");
 
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         const isAssignedByMe =
-            task.assignedBy.toString() === loggedInUserId.toString();
+            task.assignedBy._id.toString() === loggedInUserId.toString();
 
         const isAssignedToMe =
-            task.assignedTo.toString() === loggedInUserId.toString();
+            task.assignedTo._id.toString() === loggedInUserId.toString();
 
         if (!isAssignedByMe && !isAssignedToMe) {
             return res.status(403).json({
@@ -312,36 +317,40 @@ exports.updateTask = async (req, res) => {
             });
         }
 
-        /* ===============================
-           CASE 1: ASSIGNED TO ME
-           Only status update allowed
-           Pending → Completed
-        ================================ */
+        let updateMessage = "";
+
         if (isAssignedToMe && !isAssignedByMe) {
             if (
-                updatedData.status &&
-                task.status === "Pending" &&
-                updatedData.status === "Completed"
+                updatedData.status === "Completed" &&
+                task.status === "Pending"
             ) {
                 task.status = "Completed";
                 await task.save();
 
+                updateMessage = `Task "${task.taskTitle}" marked as Completed`;
+
+                transporter.sendMail({
+                    from: `"Task Manager" <${process.env.EMAILID}>`,
+                    to: task.assignedBy.email,
+                    subject: "Task Completed ",
+                    html: `
+                        <h3>Task Completed</h3>
+                        <p><b>${task.assignedTo.name}</b> has completed the task:</p>
+                        <p><b>${task.taskTitle}</b></p>
+                    `,
+                }).catch(err => console.error("Mail Error:", err));
+
                 return res.status(200).json({
-                    message: "Task marked as completed",
+                    message: updateMessage,
                     task,
                 });
             }
 
             return res.status(403).json({
-                message:
-                    "Only Pending → Completed status update is allowed",
+                message: "Only Pending → Completed is allowed",
             });
         }
 
-        /* ===============================
-           CASE 2: ASSIGNED BY ME
-           Full edit access
-        ================================ */
         if (isAssignedByMe) {
             const allowedFields = [
                 "taskTitle",
@@ -360,11 +369,26 @@ exports.updateTask = async (req, res) => {
 
             await task.save();
 
+            updateMessage = `Task "${task.taskTitle}" has been updated`;
+
+            transporter.sendMail({
+                from: `"Task Manager" <${process.env.EMAILID}>`,
+                to: task.assignedTo.email,
+                subject: "Task Updated ",
+                html: `
+                    <h3>Task Updated</h3>
+                    <p>Your task has been updated by <b>${task.assignedBy.name}</b></p>
+                    <p><b>${task.taskTitle}</b></p>
+                    <p>Status: ${task.status}</p>
+                `,
+            }).catch(err => console.error("Mail Error:", err));
+
             return res.status(200).json({
-                message: "Task updated successfully",
+                message: updateMessage,
                 task,
             });
         }
+
     } catch (err) {
         console.error("Update Task Error:", err);
         return res.status(500).json({
@@ -372,6 +396,7 @@ exports.updateTask = async (req, res) => {
         });
     }
 };
+
 exports.deleteTask = async (req, res) => {
     try {
         const loggedInUserId = req.user._id;

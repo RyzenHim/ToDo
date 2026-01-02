@@ -78,7 +78,6 @@ const EditTaskModal = ({
         }
     };
 
-    /* ================= DELETE (BY ME ONLY) ================= */
     const handleDelete = async () => {
         if (!isByMe) return;
 

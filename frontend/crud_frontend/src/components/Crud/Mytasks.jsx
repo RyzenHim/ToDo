@@ -5,6 +5,7 @@ import EditTaskModal from "./EditTaskModal";
 import DetailTaskModal from "./DetailTaskModal";
 import moment from "moment";
 import api from '../../api/axios'
+
 const Mytasks = () => {
     const bgRef = useRef(null);
     const glowRef = useRef(null);
@@ -44,7 +45,6 @@ const Mytasks = () => {
     const [dueSortToMe, setDueSortToMe] = useState("");
     const [dueSortByMe, setDueSortByMe] = useState("");
 
-    /* ================= FETCH ================= */
     useEffect(() => {
 
         fetchData();
