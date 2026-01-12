@@ -17,11 +17,9 @@ const EditTaskModal = ({
         color: "#6366f1"
     });
 
-    /* ================= ROLE FLAGS ================= */
     const isByMe = type === "byMe";
     const isToMe = type === "toMe";
 
-    /* ================= INIT FORM ================= */
     useEffect(() => {
         if (task) {
             setForm({
@@ -39,14 +37,11 @@ const EditTaskModal = ({
 
     if (!isOpen || !task) return null;
 
-    /* ================= CHANGE HANDLER ================= */
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // 🔒 TO ME → ONLY STATUS
         if (isToMe && name !== "status") return;
 
-        // 🔒 STATUS RULE
         if (name === "status") {
             if (task.status !== "Pending") return;
             if (value !== "Pending" && value !== "Completed") return;
@@ -55,7 +50,6 @@ const EditTaskModal = ({
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-    /* ================= UPDATE ================= */
     const handleUpdate = async () => {
         try {
             await api.patch(
@@ -129,14 +123,12 @@ const EditTaskModal = ({
                         className="md:col-span-2 glass-input disabled:opacity-40"
                     />
 
-                    {/* ASSIGNED TO (ALWAYS READ-ONLY) */}
                     <input
                         value={task.assignedTo?.name || ""}
                         disabled
                         className="glass-input opacity-50"
                     />
 
-                    {/* URGENCY */}
                     <select
                         name="urgency"
                         value={form.urgency}
@@ -149,7 +141,6 @@ const EditTaskModal = ({
                         <option value="High">High</option>
                     </select>
 
-                    {/* DUE DATE */}
                     <input
                         type="datetime-local"
                         name="dueDate"
@@ -159,7 +150,6 @@ const EditTaskModal = ({
                         className="glass-input disabled:opacity-40"
                     />
 
-                    {/* STATUS */}
                     <select
                         name="status"
                         value={form.status}
@@ -171,7 +161,6 @@ const EditTaskModal = ({
                         <option value="Completed">Completed</option>
                     </select>
 
-                    {/* COLOR */}
                     <input
                         type="color"
                         name="color"
@@ -180,7 +169,6 @@ const EditTaskModal = ({
                         disabled={!isByMe}
                     />
 
-                    {/* DESCRIPTION */}
                     <textarea
                         name="taskDescription"
                         value={form.taskDescription}
@@ -191,7 +179,6 @@ const EditTaskModal = ({
                     />
                 </div>
 
-                {/* ACTIONS */}
                 <div className="flex justify-between items-center mt-6">
 
                     {isByMe && (

@@ -3,10 +3,9 @@ const AssignTask = require('../model/assignTaskModel')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const secretKey = process.env.SECRET_KEY
-const emailId = process.env.EMAILID
-const passkey = process.env.PASSKEY
-const URL_ATLAS = process.env.URL_ATLAS
 const transporter = require('../utils/mailer')
+const uploadImage = require('../utils/cloudinary')
+
 exports.signup = async (req, res) => {
     try {
         const { name, email, password } = req.body
@@ -48,7 +47,7 @@ exports.login = async (req, res) => {
 
     } catch (err) {
         console.error("Login Error:", err)
-        return res.status(500).json({ message: "Internal server error " })
+        return res.status(500).json({ messphage: "Internal server error " })
     }
 }
 
@@ -61,7 +60,6 @@ exports.all = async (req, res) => {
         console.log(err);
     }
 }
-
 
 exports.profile = async (req, res) => {
     try {
@@ -79,8 +77,6 @@ exports.profile = async (req, res) => {
     }
 };
 
-
-
 exports.assigntask = async (req, res) => {
     try {
         const {
@@ -95,7 +91,14 @@ exports.assigntask = async (req, res) => {
         if (!taskTitle || !assignedTo || !urgency || !dueDate) {
             return res.status(400).json({ message: "Every field is required" });
         }
-        const assignedBy = req.user.id
+
+        const assignedBy = req.user.id;
+
+        let uploadedFiles = [];
+        console.log("req files", req.files);
+        if (req.files) {
+            uploadedFiles = await uploadImage(req.files);
+        }
 
         const addTask = await AssignTask.create({
             taskTitle,
@@ -104,33 +107,34 @@ exports.assigntask = async (req, res) => {
             urgency,
             dueDate,
             color,
-            taskDescription
+            taskDescription,
+            attachments: uploadedFiles.map(f => ({
+                url: f.secure_url,
+                public_id: f.public_id
+            }))
         });
 
         const assignedToUser = await User.findById(assignedTo);
         const assignedByUser = await User.findById(assignedBy);
 
-        if (!assignedToUser || !assignedByUser) {
-            console.error("Mail skipped: user not found");
-        } else {
+        if (assignedToUser && assignedByUser) {
             transporter.sendMail({
                 from: `"Task Manager" <${process.env.EMAILID}>`,
                 to: assignedToUser.email,
                 subject: "📌 New Task Assigned",
                 html: `
-                    <h3>New Task Assigned</h3>
-                    <p>Hello <b>${assignedToUser.name}</b>,</p>
-                    <p>You have been assigned a task by <b>${assignedByUser.name}</b>.</p>
-                    <p><b>Title:</b> ${addTask.taskTitle}</p>
-                    <p><b>Urgency:</b> ${addTask.urgency}</p>
-                    <p><b>Due Date:</b> ${new Date(addTask.dueDate).toDateString()}</p>
-                `,
-            })
-                .then(info => console.log("Mail sent:", info.messageId))
-                .catch(err => console.error("Mail Error:", err));
+          <h3>New Task Assigned</h3>
+          <p>Hello <b>${assignedToUser.name}</b>,</p>
+          <p>You have been assigned a task by <b>${assignedByUser.name}</b>.</p>
+          <p><b>Title:</b> ${addTask.taskTitle}</p>
+          <p><b>Urgency:</b> ${addTask.urgency}</p>
+          <p><b>Due Date:</b> ${new Date(addTask.dueDate).toDateString()}</p>
+        `,
+            }).catch(err => console.error("Mail Error:", err));
         }
 
         return res.status(201).json({
+            message: "Task created successfully",
             task: addTask
         });
 
@@ -139,7 +143,6 @@ exports.assigntask = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 
 exports.update = async (req, res) => {
     try {
@@ -188,8 +191,6 @@ exports.update = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
-
-
 
 exports.mytasks = async (req, res) => {
     try {
@@ -256,13 +257,11 @@ exports.mytasks = async (req, res) => {
                 }
             }
         ]);
-        // const personsAssignedToMe = await
-        // 2️ Tasks ASSIGNED TO ME
+
         const assignedToMe = await AssignTask
             .find({ assignedTo: userId })
             .populate([{ path: "assignedBy", select: "-password" }, { path: "assignedTo", select: "-password" }]); // who gave task
 
-        // 3️ Tasks ASSIGNED BY ME
         const assignedByMe = await AssignTask
             .find({ assignedBy: userId })
             .populate([{ path: "assignedBy", select: "-password" }, { path: "assignedTo", select: "-password" }]); // who received task
@@ -291,6 +290,7 @@ exports.mytasks = async (req, res) => {
         return res.status(500).json({ message: "Internal server Error" });
     }
 };
+
 exports.updateTask = async (req, res) => {
     try {
         const loggedInUserId = req.user._id;
@@ -435,7 +435,10 @@ exports.deleteTask = async (req, res) => {
 
 exports.practice = async (req, res) => {
     try {
+        const formData = (req.formData)
+        console.log("formData", req);
         const currentLoogedInUserID = req.user._id
+        console.log(req.user._id);
         const { name } = await User.findById(currentLoogedInUserID)
         //all taks details including the task including my taks 
         const tasks = await AssignTask.find()
@@ -463,3 +466,8 @@ exports.practice = async (req, res) => {
 
 
 }
+
+
+
+
+

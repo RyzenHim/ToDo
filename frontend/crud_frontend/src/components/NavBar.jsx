@@ -83,6 +83,9 @@ const NavBar = () => {
                     <NavLink to="/assigntasks" className={linkClass}>
                         Assign Tasks
                     </NavLink>
+                    <NavLink to="/boards" className={linkClass}>
+                        My Boards
+                    </NavLink>
                     {/* <NavLink to="/practice" className={linkClass}>
                         Practice
                     </NavLink> */}

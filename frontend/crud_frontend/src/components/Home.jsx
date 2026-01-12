@@ -40,7 +40,6 @@ const Home = () => {
         fetchProfile();
     }, [navigate]);
 
-    /* ================= MOTION ================= */
     useEffect(() => {
         const onMouseMove = (e) => {
             const cx = window.innerWidth / 2;
@@ -92,7 +91,6 @@ const Home = () => {
             `}</style>
 
             <div className="relative min-h-screen w-screen overflow-hidden pt-16">
-                {/* BACKGROUND */}
                 <div
                     ref={bgRef}
                     className="absolute inset-[-30%]"
@@ -104,7 +102,6 @@ const Home = () => {
                     }}
                 />
 
-                {/* GLOW */}
                 <div
                     ref={glowRef}
                     className="pointer-events-none absolute w-[900px] h-[900px] rounded-full blur-[240px]"
@@ -114,10 +111,8 @@ const Home = () => {
                     }}
                 />
 
-                {/* CONTENT */}
                 <div className="relative z-10 max-w-7xl mx-auto px-8 py-10 animate-[fadeUp_0.7s_ease-out_both]">
 
-                    {/* HEADER */}
                     <div className="flex items-end justify-between mb-10">
                         <div>
                             <h1 className="text-2xl font-semibold text-white">
@@ -141,7 +136,6 @@ const Home = () => {
                         </button>
                     </div>
 
-                    {/* ================= STATS ================= */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         <StatCard title="Assigned To Me" value={countTaskAssignedToMe} />
                         <StatCard title="Assigned By Me" value={countTaskAssignedByMe} />
@@ -149,7 +143,6 @@ const Home = () => {
                         <StatCard title="Completed Tasks" value={countCompletedTask} />
                     </div>
 
-                    {/* ================= MAIN OPTIONS ================= */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                         <DashboardCard title="My Tasks" desc="Tasks assigned to you" onClick={() => navigate("/mytasks")} />
                         <DashboardCard title="Assigned By Me" desc="Tasks you gave others" onClick={() => navigate("/mytasks")} />
@@ -159,7 +152,6 @@ const Home = () => {
                         <DashboardCard title="Notifications" desc="Task alerts" />
                     </div>
 
-                    {/* ================= QUICK ACTIONS ================= */}
                     <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
                         <h3 className="text-lg font-semibold text-white mb-4">
                             Quick Actions
@@ -178,7 +170,6 @@ const Home = () => {
     );
 };
 
-/* ================= UI COMPONENTS ================= */
 
 const StatCard = ({ title, value }) => (
     <div className="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20
@@ -213,5 +204,6 @@ const ActionButton = ({ label, onClick }) => (
         {label}
     </button>
 );
+
 
 export default Home;

@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+/* .btn-hover {
+    @apply hover:bg-blue-500 hover:text-white hover:shadow-lg hover:scale-105 transition-all duration-300;
+} */
+
+@keyframes aurora {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}

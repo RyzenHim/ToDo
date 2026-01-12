@@ -11,7 +11,7 @@ router.post('/assigntask', auth, userController.assigntask)
 router.patch('/update', auth, userController.update)
 router.get('/mytasks', auth, userController.mytasks)
 router.patch('/updatetask/:id', auth, userController.updateTask)
-router.get('/practice', auth, userController.practice)
+router.post('/practice', auth, userController.practice)
 router.delete(
     "/deletetask/:id",
     auth,

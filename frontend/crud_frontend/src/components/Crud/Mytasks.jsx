@@ -28,7 +28,7 @@ const Mytasks = () => {
     const [detailTask, setDetailTask] = useState(null);
     const [editingType, setEditingType] = useState(null);
 
-    /* SECTION FILTERS */
+
     const [filtersToMe, setFiltersToMe] = useState({
         status: "",
         urgency: "",
@@ -41,7 +41,6 @@ const Mytasks = () => {
         dueDate: ""
     });
 
-    /* DUE DATE SORT */
     const [dueSortToMe, setDueSortToMe] = useState("");
     const [dueSortByMe, setDueSortByMe] = useState("");
 
@@ -73,7 +72,6 @@ const Mytasks = () => {
             setTimeout(() => setLoading(false), 1000);
         }
     }
-    /* ================= SEARCH ================= */
     const searchResultToMe = assignedToMe.filter(e => {
         const q = searchTo.toLowerCase().trim();
         return (
@@ -92,7 +90,6 @@ const Mytasks = () => {
         );
     });
 
-    /* ================= FILTER ENGINE ================= */
     const applyFilters = (tasks, filters) =>
         tasks.filter(task => {
             const statusMatch = filters.status ? task.status === filters.status : true;
@@ -105,7 +102,6 @@ const Mytasks = () => {
             return statusMatch && urgencyMatch && dueDateMatch;
         });
 
-    /* ================= DUE DATE SORT ================= */
     const applyDueDateSort = (tasks, sortOrder) => {
         if (!sortOrder) return tasks;
 
@@ -121,7 +117,6 @@ const Mytasks = () => {
         });
     };
 
-    /* ================= FINAL TASK LISTS ================= */
     const finalToMeTasks = applyDueDateSort(
         applyFilters(
             sortPersonTo

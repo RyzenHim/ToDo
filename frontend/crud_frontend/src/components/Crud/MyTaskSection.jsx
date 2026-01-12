@@ -34,7 +34,6 @@ const MyTaskSection = ({
     return (
         <div className="space-y-12 min-w-0">
 
-            {/* ================= GLASS HEADER ================= */}
             <div className="relative rounded-3xl
                             bg-white/10 backdrop-blur-[28px]
                             border border-white/20
@@ -64,7 +63,6 @@ const MyTaskSection = ({
                         </span>
                     </div>
 
-                    {/* SEARCH + PERSON */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <input
                             value={search}
@@ -94,7 +92,6 @@ const MyTaskSection = ({
                         </select>
                     </div>
 
-                    {/* FILTER BAR */}
                     <div className="flex justify-between flex-wrap gap-4">
                         <div className="flex gap-3">
                             <select
@@ -160,7 +157,6 @@ const MyTaskSection = ({
                 </div>
             </div>
 
-            {/* ================= TASK LIST ================= */}
             <div className="space-y-6">
                 {loading ? (
                     <>
@@ -170,7 +166,6 @@ const MyTaskSection = ({
                 ) : (
                     tasks.map((task, i) => {
 
-                        /* BORDER COLOR FROM BACKEND URGENCY */
                         const borderColor =
                             task.urgency === "High"
                                 ? "border-rose-400/50"
@@ -178,7 +173,6 @@ const MyTaskSection = ({
                                     ? "border-amber-400/50"
                                     : "border-emerald-400/50";
 
-                        /* URGENCY BADGE COLOR ONLY */
                         const urgencyBadge =
                             task.urgency === "High"
                                 ? "bg-rose-500/25 text-rose-300"

@@ -16,6 +16,13 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    attachments: [
+        {
+            url: String,
+            public_id: String
+        }]
+    ,
+
     otp: {
         type: String
     },

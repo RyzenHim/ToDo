@@ -5,7 +5,7 @@ const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 8080
 const URL_ATLAS = process.env.URL_ATLAS
-
+const fileUpload = require('express-fileupload')
 
 app.use(
     cors({
@@ -18,7 +18,8 @@ app.use(
 );
 
 app.use(express.json())
-
+app.use(express.urlencoded())
+app.use(fileUpload());
 mongoose
     .connect(URL_ATLAS)
     .then(() => console.log("DB Connected"))

@@ -21,6 +21,7 @@ const AssignTask = () => {
     const [date, setDate] = useState("");
     const [time, setTime] = useState("");
     const [taskDescription, setTaskDescription] = useState("");
+    const [image, setImage] = useState(null);
 
     /* ---------------- EFFECT ---------------- */
     useEffect(() => {
@@ -55,7 +56,6 @@ const AssignTask = () => {
         }
     };
 
-    /* ---------------- SUBMIT ---------------- */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -66,25 +66,25 @@ const AssignTask = () => {
 
         const dueDate = new Date(`${date}T${time}`);
 
-        const submitData = {
-            taskTitle,
-            assignedTo,
-            urgency,
-            dueDate,
-            color,
-            taskDescription,
-        };
+        const formData = new FormData();
+        formData.append("taskTitle", taskTitle);
+        formData.append("assignedTo", assignedTo);
+        formData.append("urgency", urgency);
+        formData.append("dueDate", dueDate.toISOString());
+        formData.append("color", color);
+        formData.append("taskDescription", taskDescription);
+
+        if (image) {
+            formData.append("attachments", image);   // must match backend
+        }
 
         try {
-            await api.post(
-                "/user/assigntask",
-                submitData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
+            await api.post("/user/assigntask", formData, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
             alert("Task assigned successfully");
 
@@ -95,6 +95,8 @@ const AssignTask = () => {
             setTime("");
             setColor("#6366f1");
             setTaskDescription("");
+            setImage(null);
+
         } catch (err) {
             console.error("Error submitting task", err);
         }
@@ -214,6 +216,12 @@ const AssignTask = () => {
                                 onChange={(e) => setTime(e.target.value)}
                                 className="glass-input"
                             />
+                            <input
+                                type="file"
+                                onChange={(e) => setImage(e.target.files[0])}
+                                className="glass-input"
+                            />
+
 
                             <div className="col-span-2 flex items-center gap-4">
                                 <label className="text-gray-300 text-sm">
