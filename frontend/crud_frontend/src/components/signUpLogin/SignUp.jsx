@@ -8,13 +8,18 @@ const SignUp = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    const [message, setMessage] = useState(null)
     const handleSignup = async () => {
         const signupdata = { name, email, password }
+        try {
 
-        const postSignUpData = await api.post('/user/signup', signupdata)
-        alert('Signup Completed Please login')
-        navigate('/user/login')
+            const postSignUpData = await api.post('/user/signup', signupdata)
+            alert('Signup Completed Please login')
+            navigate('/user/login')
+        } catch (err) {
+            setMessage(err.response?.data?.message)
+        }
+
 
     }
 
@@ -24,8 +29,8 @@ const SignUp = () => {
             <h2 className="text-2xl font-semibold text-white mb-2">
                 Create your account
             </h2>
-            <p className="text-sm text-gray-300 mb-6">
-                Join the experience in just a few steps
+            <p className={`text-sm  mb-6 ${message === null ? "text-gray-300" : "text-red-400"}`}>
+                {message || "Join the experience in just a few steps"}
             </p>
 
             {/* FORM */}

@@ -17,5 +17,9 @@ router.delete(
     auth,
     userController.deleteTask
 );
+router.get("/getAllTasks", auth, userController.getAllTasks);
+router.patch("/tasks/reassign/:taskId", auth, userController.reassignTask);
+router.delete("/user/:id", auth, userController.deleteUser);
+
 
 module.exports = router

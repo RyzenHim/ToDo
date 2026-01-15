@@ -3,17 +3,100 @@
 /* .btn-hover {
     @apply hover:bg-blue-500 hover:text-white hover:shadow-lg hover:scale-105 transition-all duration-300;
 } */
+/* ===== DEEP CINEMATIC LAYERS ===== */
 
-@keyframes aurora {
-    0% {
-        background-position: 0% 50%;
-    }
+@keyframes nebulaShift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
 
-    50% {
-        background-position: 100% 50%;
-    }
+  50% {
+    transform: translate(-60px, -40px) scale(1.08);
+  }
 
-    100% {
-        background-position: 0% 50%;
-    }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.nebula-layer {
+  position: absolute;
+  inset: -50%;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(99, 102, 241, .14), transparent 45%),
+    radial-gradient(circle at 70% 60%, rgba(168, 85, 247, .12), transparent 50%);
+  filter: blur(140px);
+  animation: nebulaShift 90s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ===== BOARD CARD ENTRANCE ===== */
+
+.board-card {
+  animation: cardEnter 480ms cubic-bezier(.22, 1, .36, 1) both;
+  will-change: transform, box-shadow;
+}
+
+/* hover lift */
+.board-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .05),
+    0 20px 60px rgba(0, 0, 0, .45),
+    0 0 40px rgba(99, 102, 241, .18);
+}
+
+/* ===== TASK MOTION ===== */
+
+.task-card {
+  transition:
+    transform .25s cubic-bezier(.22, 1, .36, 1),
+    box-shadow .25s ease,
+    background .25s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, .35),
+    0 0 20px rgba(99, 102, 241, .25);
+}
+
+/* ===== GLOW ORBS MOTION ===== */
+
+@keyframes orbFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+
+  50% {
+    transform: translateY(-40px) translateX(20px);
+  }
+
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.glow-orb {
+  animation: orbFloat 18s ease-in-out infinite;
+}
+
+/* ===== DRAG POLISH ===== */
+
+.dragging {
+  transition: none !important;
+  cursor: grabbing;
+}
+
+.drop-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .08),
+    0 0 60px rgba(99, 102, 241, .45);
+}
+
+.aurora-bg,
+.light-beams,
+.particles-layer {
+  pointer-events: none !important;
 }

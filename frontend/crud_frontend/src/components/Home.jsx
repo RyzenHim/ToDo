@@ -160,8 +160,9 @@ const Home = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <ActionButton label="Assign Task" onClick={() => navigate("/assigntasks")} />
                             <ActionButton label="View Tasks" onClick={() => navigate("/mytasks")} />
+                            <ActionButton label="View Stats" onClick={() => navigate("/stats")} />
                             <ActionButton label="Profile" onClick={() => navigate("/profile")} />
-                            <ActionButton label="Settings" />
+                            {/* <ActionButton label="Settings" /> */}
                         </div>
                     </div>
                 </div>

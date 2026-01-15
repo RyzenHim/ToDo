@@ -14,6 +14,7 @@ const AddUserCard = ({ showAddUser, setShowAddUser, ...formProps }) => {
                 <div
                     onClick={() => setShowAddUser(true)}
                     className="
+                    border
                         w-full h-12 flex justify-center items-center gap-2
                         text-sm font-medium
                         bg-white/5 border border-white/10 rounded-xl

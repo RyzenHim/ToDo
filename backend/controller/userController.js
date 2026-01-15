@@ -5,26 +5,96 @@ const jwt = require('jsonwebtoken')
 const secretKey = process.env.SECRET_KEY
 const transporter = require('../utils/mailer')
 const uploadImage = require('../utils/cloudinary')
+const crypto = require("crypto");
+
+const generatePassword = () => {
+    return crypto.randomBytes(4).toString("hex");
+};
+
+
+// exports.signup = async (req, res) => {
+//     try {
+//         const { name, email, password } = req.body
+//         if (!(name && email && password)) {
+//             return res.status(400).json({ message: "All the feild are required" })
+//         }
+//         const existingUser = await User.findOne({ email })
+//         if (existingUser) {
+//             return res.status(400).json({ message: "Email already exist" })
+//         }
+//         const salt = await bcrypt.genSaltSync(10)
+//         const hash = await bcrypt.hashSync(password, salt)
+//         const newData = new User({ name, email, password: hash })
+//         await newData.save()
+//         return res.status(200).json({ message: "User Saved " })
+//     } catch (err) {
+//         return res.status(500).json({ err: 'Internal Server Error' })
+//     }
+// }
 
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password } = req.body
-        if (!(name && email && password)) {
-            return res.status(400).json({ message: "All the feild are required" })
+        let { name, email, password } = req.body;
+        // console.log(req.body);
+        if (!name || !email) {
+            return res.status(400).json({ message: "Name and Email are required" });
         }
-        const existingUser = await User.findOne({ email })
+
+        // check if user already exists
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "Email already exist" })
+            return res.status(400).json({ message: "Email already exists" });
         }
-        const salt = await bcrypt.genSaltSync(10)
-        const hash = await bcrypt.hashSync(password, salt)
+
+        let generatedPassword = null;
+
+        // if password not provided → generate one
+        if (!password) {
+            generatedPassword = generatePassword();
+            password = generatedPassword;
+        }
+
+        // hash password
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
+        // create user
+        // const newUser = await User.create({
+        //     name,
+        //     email,
+        //     password: hash,
+        // });
+
         const newData = new User({ name, email, password: hash })
+        console.log(newData);
         await newData.save()
-        return res.status(200).json({ message: "User Saved " })
+        /* ---------- SEND MAIL IF AUTO PASSWORD ---------- */
+        if (generatedPassword) {
+            await transporter.sendMail({
+                from: `"Task Manager" <${process.env.EMAILID}>`,
+                to: email,
+                subject: "Your Account Has Been Created",
+                html: `
+          <h3>Welcome to Task Manager</h3>
+          <p>Hello <b>${name}</b>,</p>
+          <p>Your account has been created by the admin.</p>
+          <p><b>Email:</b> ${email}</p>
+          <p><b>Password:</b> ${generatedPassword}</p>
+          <p>Please login and change your password immediately.</p>
+        `,
+            });
+        }
+
+        return res.status(201).json({
+            message: "User created successfully",
+            autoPasswordSent: !!generatedPassword,
+        });
     } catch (err) {
-        return res.status(500).json({ err: 'Internal Server Error' })
+        console.error(err);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
+
 
 exports.login = async (req, res) => {
     try {
@@ -467,7 +537,74 @@ exports.practice = async (req, res) => {
 
 }
 
+// GET all tasks
+exports.getAllTasks = async (req, res) => {
+    try {
+        const tasks = await AssignTask.find()
+            .populate("assignedBy", "name email")
+            .populate("assignedTo", "name email")
+            .sort({ createdAt: -1 });
+        console.log("tasks", tasks);
+        return res.status(200).json({
+            message: "All tasks fetched",
+            tasks
+        });
+    } catch (err) {
+        console.error("GET ALL TASKS ERROR:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+// PATCH /tasks/reassign/:taskId// PATCH /tasks/reassign/:taskId
+exports.reassignTask = async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const { newUserId } = req.body;
+
+        const task = await AssignTask.findById(taskId);
+
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const prevAssignedTo = task.assignedTo;
+        const prevStatus = task.status;
+
+        // 🔥 reassign + reset status
+        task.assignedTo = newUserId;
+        task.status = "Pending";
+
+        await task.save();
+
+        const updatedTask = await AssignTask.findById(taskId)
+            .populate("assignedBy", "name")
+            .populate("assignedTo", "name");
+
+        return res.status(200).json({
+            message: "Task reassigned",
+            task: updatedTask,
+            previous: {
+                assignedTo: prevAssignedTo,
+                status: prevStatus
+            }
+        });
+    } catch (err) {
+        console.error("Reassign task error:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 
+exports.deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
 
+        await User.findByIdAndDelete(id);
+        await AssignTask.deleteMany({ assignedTo: id });
+
+        return res.status(200).json({ message: "User deleted" });
+    } catch (err) {
+        console.error("Delete user error:", err);
+        return res.status(500).json({ message: "Failed to delete user" });
+    }
+};
 

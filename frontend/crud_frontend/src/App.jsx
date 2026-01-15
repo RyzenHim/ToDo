@@ -11,6 +11,8 @@ import Mytasks from './components/Crud/Mytasks'
 import AssignTask from './components/Crud/AssignTask'
 // import Pracctice from './components/Pracctice'
 import Boards from './components/dnd/Boards'
+import Stats from './components/stats/Stats'
+import TaskCalendar from './components/taskCalendar/TaskCalendar'
 
 function App() {
 
@@ -24,6 +26,9 @@ function App() {
             <Route path='mytasks' element={<Mytasks />} />
             <Route path='assigntasks' element={<AssignTask />} />
             <Route path='boards' element={<Boards />} />
+            {/* <Route path="/boardstats" element={<BoardStats />} /> */}
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/taskCalander" element={<TaskCalendar />} />
             {/* <Route path='practice' element={<Pracctice />} /> */}
           </Route>
 

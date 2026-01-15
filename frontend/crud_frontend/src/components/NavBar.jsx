@@ -86,6 +86,9 @@ const NavBar = () => {
                     <NavLink to="/boards" className={linkClass}>
                         My Boards
                     </NavLink>
+                    <NavLink to="/taskCalander" className={linkClass}>
+                        Task Calander
+                    </NavLink>
                     {/* <NavLink to="/practice" className={linkClass}>
                         Practice
                     </NavLink> */}
