@@ -7,7 +7,7 @@ import moment from "moment";
 import api from "../../api/axios";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
-import "./TaskCalender.css";
+import "./taskCalender.css";
 
 const TaskCalendar = () => {
     const [assignedToMe, setAssignedToMe] = useState([]);
