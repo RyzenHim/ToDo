@@ -21,6 +21,7 @@ import {
 import api from "../../api/axios";
 import UserActionModal from "./UserActionModal";
 
+/* ---------------- DRAG ANIMATION ---------------- */
 const dropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({
         styles: { active: { opacity: "0.4" } },
@@ -48,6 +49,8 @@ const Boards = () => {
     const [activeUser, setActiveUser] = useState(null);
     const [userActionMode, setUserActionMode] = useState(null);
 
+    const [viewMode, setViewMode] = useState("board"); // "board" | "table"
+
     /* ---------------- FETCH ---------------- */
     useEffect(() => {
         const fetchData = async () => {
@@ -63,15 +66,12 @@ const Boards = () => {
                     }),
                 ]);
 
-                /* USERS */
                 const users = userRes.data.existingUsers || [];
                 setExistingUserData(users);
                 setCardOrder(users.map((u) => u._id));
 
-                /* TASKS (same source as Calendar & Mytasks) */
                 const { assignedToMe = [], assignedByMe = [] } = taskRes.data;
                 setTasks([...assignedToMe, ...assignedByMe]);
-
             } catch (err) {
                 console.error("Fetch data error:", err);
             } finally {
@@ -82,11 +82,10 @@ const Boards = () => {
         fetchData();
     }, []);
 
+    /* ---------------- TASK CRUD ---------------- */
     const handleTaskUpdated = (updatedTask) => {
         setTasks((prev) =>
-            prev.map((t) =>
-                t._id === updatedTask._id ? updatedTask : t
-            )
+            prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
         );
     };
 
@@ -94,7 +93,7 @@ const Boards = () => {
         setTasks((prev) => prev.filter((t) => t._id !== taskId));
     };
 
-
+    /* ---------------- USER DELETE ---------------- */
     const handleDeleteUser = async (userId, userName) => {
         if (!window.confirm(`Delete ${userName}?`)) return;
 
@@ -105,11 +104,7 @@ const Boards = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-
-            setExistingUserData((prev) =>
-                prev.filter((u) => u._id !== userId)
-            );
-
+            setExistingUserData((prev) => prev.filter((u) => u._id !== userId));
             setCardOrder((prev) => prev.filter((id) => id !== userId));
         } catch (err) {
             alert("Failed to delete user");
@@ -126,17 +121,11 @@ const Boards = () => {
 
             await api.post(
                 "/user/signup",
-                {
-                    name: formData.name,
-                    email: formData.email,
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+                { name: formData.name, email: formData.email },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
             alert("User created. Credentials sent by email.");
-
             setFormData({ name: "", email: "" });
             setShowAddUser(false);
 
@@ -166,10 +155,9 @@ const Boards = () => {
 
     const getTasksForUser = (userId) => tasksByUser[userId] || [];
 
+    /* ---------------- DND SENSORS ---------------- */
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 6 },
-        })
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
     );
 
     /* ---------------- DRAG START ---------------- */
@@ -189,7 +177,7 @@ const Boards = () => {
         const overData = over.data.current;
 
         /* ================================
-           1) TASK → TASK (same card sort)
+           1) TASK → TASK (same column)
         ================================= */
         if (
             activeData?.type === "task" &&
@@ -224,10 +212,9 @@ const Boards = () => {
            2) TASK → USER (REASSIGN)
         ================================= */
         if (activeData?.type === "task" && overData?.type === "user") {
-
             const task = activeData?.task;
 
-            // 🛡️ HARD GUARD – prevents crash
+            // 🛡️ HARD GUARD
             if (!task || !task.assignedTo) {
                 console.warn("Drag data missing task:", activeData);
                 return;
@@ -235,13 +222,11 @@ const Boards = () => {
 
             const newUserId = overData.userId;
 
-            // same user → no-op
             if (task.assignedTo._id === newUserId) return;
 
             try {
                 const token = localStorage.getItem("token");
 
-                // ✅ CORRECT ENDPOINT FOR REASSIGN
                 const res = await api.patch(
                     `/user/tasks/reassign/${task._id}`,
                     { newUserId },
@@ -261,7 +246,6 @@ const Boards = () => {
                         t._id === updatedTask._id ? updatedTask : t
                     )
                 );
-
             } catch (err) {
                 console.error("Reassign task error:", err);
             }
@@ -285,7 +269,6 @@ const Boards = () => {
             });
         }
     };
-
 
     /* ---------------- UNDO ---------------- */
     const handleUndo = async () => {
@@ -330,6 +313,7 @@ const Boards = () => {
         setTaskInputs((p) => ({ ...p, [id]: "" }));
         closeAddTaskForm(id);
     };
+
     const openUserModal = (mode, user) => {
         setActiveUser(user);
         setUserActionMode(mode);
@@ -355,14 +339,6 @@ const Boards = () => {
 
     return (
         <div className="relative min-h-screen w-screen text-white pt-24 overflow-hidden">
-
-            {/* BACKGROUND */}
-            <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-[-40%] aurora-bg" />
-                <div className="absolute inset-0 light-beams" />
-                <div className="absolute inset-0 particles-layer" />
-            </div>
-
             {/* UNDO TOAST */}
             {lastAction && (
                 <div className="fixed top-6 right-6 z-50 bg-slate-900/80 backdrop-blur-xl border border-white/10 px-5 py-2.5 rounded-2xl flex items-center gap-4 shadow-[0_0_35px_rgba(99,102,241,0.45)]">
@@ -378,100 +354,131 @@ const Boards = () => {
                 </div>
             )}
 
-            {/* CONTENT */}
-            <div className="relative z-10 flex justify-center px-12">
-                <DndContext
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    sensors={sensors}
-                >
-                    <SortableContext
-                        items={cardOrder}
-                        strategy={horizontalListSortingStrategy}
+            {/* VIEW TOGGLE */}
+            <div className="relative z-20 flex justify-end px-12 mb-6">
+                <div className="flex gap-2 bg-white/5 border border-white/10 rounded-xl p-1 backdrop-blur-xl">
+                    <button
+                        onClick={() => setViewMode("board")}
+                        className={`px-4 py-2 rounded-lg text-sm transition
+                        ${viewMode === "board"
+                                ? "bg-indigo-500/30 text-indigo-200"
+                                : "text-gray-300 hover:bg-white/10"}`}
                     >
-                        <div className="flex flex-wrap gap-12 max-w-[1600px] w-full items-start justify-center">
-                            {cardOrder.map((id) => {
-                                const user = existingUserData.find((u) => u._id === id);
-                                if (!user) return null;
+                        Board View
+                    </button>
 
-                                return (
-                                    <DropZone key={id} id={id} title={user.name}>
-                                        <DragableBox id={id}>
-                                            <SortableContext
-                                                items={getTasksForUser(id).map(t => `task-${t._id}`)}
-                                                strategy={verticalListSortingStrategy}
-                                            >
-                                                <TaskCard
-                                                    userName={user.name}
-                                                    userId={id}
-
-                                                    onViewUser={(uid) => {
-                                                        const u = existingUserData.find(x => x._id === uid);
-                                                        openUserModal("view", u);
-                                                    }}
-
-                                                    onEditUser={(uid) => {
-                                                        const u = existingUserData.find(x => x._id === uid);
-                                                        openUserModal("edit", u);
-                                                    }}
-
-                                                    onDeleteUserFromMenu={(uid) => {
-                                                        const u = existingUserData.find(x => x._id === uid);
-                                                        openUserModal("delete", u);
-                                                    }}
-
-                                                    tasks={getTasksForUser(id)}
-                                                    isTaskFormOpen={!!openTaskForms[id]}
-                                                    openAddTaskForm={openAddTaskForm}
-                                                    closeAddTaskForm={closeAddTaskForm}
-                                                    taskInput={taskInputs[id] || ""}
-                                                    onTaskInputChange={handleTaskInputChange}
-                                                    handleTaskSubmit={handleTaskSubmit}
-                                                    onTaskUpdated={handleTaskUpdated}
-                                                    onTaskDeleted={handleTaskDeleted}
-                                                />
-
-                                            </SortableContext>
-                                        </DragableBox>
-                                    </DropZone>
-                                );
-                            })}
-                        </div>
-                    </SortableContext>
-
-                    {/* ADD USER CARD */}
-                    <DropZone id="add-user-zone" title="Add User">
-                        <DragableBox id="add-user-card">
-                            <AddUserCard
-                                showAddUser={showAddUser}
-                                setShowAddUser={setShowAddUser}
-                                formData={formData}
-                                handleFormChange={handleFormChange}
-                                handleAddUser={handleAddUser}
-                                showEmailInput={showEmailInput}
-                                setShowEmailInput={setShowEmailInput}
-                                setShowAddTask={setShowAddTask}
-                            />
-                        </DragableBox>
-                    </DropZone>
-
-                    {/* DRAG PREVIEW */}
-                    <DragOverlay dropAnimation={dropAnimation}>
-                        {activeDragTask ? (
-                            <div className="px-4 py-3 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-white/20 shadow-[0_0_45px_rgba(99,102,241,0.45)]">
-                                <div className="font-medium text-sm">
-                                    {activeDragTask.taskTitle}
-                                </div>
-                                <div className="text-[11px] text-gray-300 mt-1">
-                                    Assigned by {activeDragTask.assignedBy?.name}
-                                </div>
-                            </div>
-                        ) : null}
-                    </DragOverlay>
-                </DndContext>
-
+                    <button
+                        onClick={() => setViewMode("table")}
+                        className={`px-4 py-2 rounded-lg text-sm transition
+                        ${viewMode === "table"
+                                ? "bg-emerald-500/30 text-emerald-200"
+                                : "text-gray-300 hover:bg-white/10"}`}
+                    >
+                        Table View
+                    </button>
+                </div>
             </div>
+
+            {/* ================= CONTENT ================= */}
+            {viewMode === "board" ? (
+                <div className="relative z-10 flex justify-center px-12">
+                    <DndContext
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        sensors={sensors}
+                    >
+                        <SortableContext
+                            items={cardOrder}
+                            strategy={horizontalListSortingStrategy}
+                        >
+                            <div className="flex flex-wrap gap-12 max-w-[1600px] w-full items-start justify-center self-start">
+                                {cardOrder.map((id) => {
+                                    const user = existingUserData.find((u) => u._id === id);
+                                    if (!user) return null;
+
+                                    return (
+                                        <DropZone key={id} id={id} title={user.name}>
+                                            <DragableBox id={id}>
+                                                <SortableContext
+                                                    items={getTasksForUser(id).map(t => `task-${t._id}`)}
+                                                    strategy={verticalListSortingStrategy}
+                                                >
+                                                    <TaskCard
+                                                        userName={user.name}
+                                                        userId={id}
+                                                        onViewUser={(uid) => {
+                                                            const u = existingUserData.find(x => x._id === uid);
+                                                            openUserModal("view", u);
+                                                        }}
+                                                        onEditUser={(uid) => {
+                                                            const u = existingUserData.find(x => x._id === uid);
+                                                            openUserModal("edit", u);
+                                                        }}
+                                                        onDeleteUserFromMenu={(uid) => {
+                                                            const u = existingUserData.find(x => x._id === uid);
+                                                            openUserModal("delete", u);
+                                                        }}
+                                                        tasks={getTasksForUser(id)}
+                                                        isTaskFormOpen={!!openTaskForms[id]}
+                                                        openAddTaskForm={openAddTaskForm}
+                                                        closeAddTaskForm={closeAddTaskForm}
+                                                        taskInput={taskInputs[id] || ""}
+                                                        onTaskInputChange={handleTaskInputChange}
+                                                        handleTaskSubmit={handleTaskSubmit}
+                                                        onTaskUpdated={handleTaskUpdated}
+                                                        onTaskDeleted={handleTaskDeleted}
+                                                    />
+                                                </SortableContext>
+                                            </DragableBox>
+                                        </DropZone>
+                                    );
+                                })}
+                            </div>
+                        </SortableContext>
+
+                        {/* ADD USER CARD */}
+                        <DropZone id="add-user-zone" title="Add User">
+                            <DragableBox id="add-user-card">
+                                <AddUserCard
+                                    showAddUser={showAddUser}
+                                    setShowAddUser={setShowAddUser}
+                                    formData={formData}
+                                    handleFormChange={handleFormChange}
+                                    handleAddUser={handleAddUser}
+                                    showEmailInput={showEmailInput}
+                                    setShowEmailInput={setShowEmailInput}
+                                    setShowAddTask={setShowAddTask}
+                                />
+                            </DragableBox>
+                        </DropZone>
+
+                        {/* DRAG PREVIEW */}
+                        <DragOverlay dropAnimation={dropAnimation}>
+                            {activeDragTask ? (
+                                <div className="px-4 py-3 rounded-xl bg-slate-900/80 backdrop-blur-xl border border-white/20 shadow-[0_0_45px_rgba(99,102,241,0.45)]">
+                                    <div className="font-medium text-sm">
+                                        {activeDragTask.taskTitle}
+                                    </div>
+                                    <div className="text-[11px] text-gray-300 mt-1">
+                                        Assigned by {activeDragTask.assignedBy?.name}
+                                    </div>
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
+                </div>
+            ) : (
+                <div className="relative z-10 px-12 w-full">
+                    <TaskTableView
+                        tasks={tasks}
+                        onTaskUpdated={handleTaskUpdated}
+                        onTaskDeleted={handleTaskDeleted}
+                    />
+                </div>
+            )}
+
+            {/* USER MODAL */}
             <UserActionModal
                 isOpen={!!activeUser}
                 mode={userActionMode}
@@ -487,7 +494,6 @@ const Boards = () => {
                     setCardOrder(prev => prev.filter(uid => uid !== id));
                 }}
             />
-
         </div>
     );
 };
@@ -495,13 +501,95 @@ const Boards = () => {
 /* ---------------- SKELETON CARD ---------------- */
 const BoardSkeleton = () => {
     return (
-        <div className="w-72 min-h-[300px] rounded-2xl bg-white/5 border border-white/10 p-5 animate-pulse shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+        <div className="relative w-72 h-fit min-h-[140px] rounded-2xl bg-white/5 border border-white/10 p-5 animate-pulse shadow-[0_0_30px_rgba(0,0,0,0.4)]">
             <div className="h-3 w-24 bg-white/20 rounded mb-5" />
             <div className="space-y-4">
                 <div className="h-9 bg-white/10 rounded-lg" />
                 <div className="h-9 bg-white/10 rounded-lg" />
                 <div className="h-9 bg-white/10 rounded-lg" />
             </div>
+        </div>
+    );
+};
+
+/* ---------------- TABLE VIEW ---------------- */
+const TaskTableView = ({ tasks, onTaskUpdated, onTaskDeleted }) => {
+    return (
+        <div className="w-full overflow-x-auto">
+            <table className="w-full border border-white/10 rounded-xl overflow-hidden backdrop-blur-xl bg-white/5">
+                <thead className="bg-white/10">
+                    <tr className="text-left text-xs uppercase tracking-wider text-indigo-200">
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3">Assigned To</th>
+                        <th className="px-4 py-3">Assigned By</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Urgency</th>
+                        <th className="px-4 py-3">Due</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody className="divide-y divide-white/10 text-sm">
+                    {tasks.map((t) => (
+                        <tr key={t._id} className="hover:bg-white/10 transition">
+                            <td className="px-4 py-3 font-medium">{t.taskTitle}</td>
+                            <td className="px-4 py-3">{t.assignedTo?.name}</td>
+                            <td className="px-4 py-3">{t.assignedBy?.name}</td>
+
+                            <td className="px-4 py-3">
+                                <span
+                                    className={`px-2 py-1 rounded-full text-xs
+                                    ${t.status === "Completed"
+                                            ? "bg-emerald-500/20 text-emerald-300"
+                                            : t.status === "In Progress"
+                                                ? "bg-indigo-500/20 text-indigo-300"
+                                                : "bg-yellow-500/20 text-yellow-300"}`}
+                                >
+                                    {t.status}
+                                </span>
+                            </td>
+
+                            <td className="px-4 py-3">{t.urgency}</td>
+
+                            <td className="px-4 py-3">
+                                {new Date(t.dueDate).toLocaleDateString()}
+                            </td>
+
+                            <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() =>
+                                            onTaskUpdated({ ...t, status: "Completed" })
+                                        }
+                                        className="px-3 py-1 rounded-lg text-xs
+                                        bg-emerald-500/20 text-emerald-300
+                                        hover:bg-emerald-500/30 transition"
+                                    >
+                                        Complete
+                                    </button>
+
+                                    <button
+                                        onClick={() => onTaskDeleted(t._id)}
+                                        className="px-3 py-1 rounded-lg text-xs
+                                        bg-red-500/20 text-red-300
+                                        hover:bg-red-500/30 transition"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+
+                    {tasks.length === 0 && (
+                        <tr>
+                            <td colSpan="7" className="text-center py-8 text-gray-400">
+                                No tasks available
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 };

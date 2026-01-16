@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -8,11 +8,16 @@ import api from "../../api/axios";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import "./taskCalender.css";
+import { FiMaximize, FiMinimize, FiX } from "react-icons/fi";
 
 const TaskCalendar = () => {
     const [assignedToMe, setAssignedToMe] = useState([]);
     const [assignedByMe, setAssignedByMe] = useState([]);
     const [activeTask, setActiveTask] = useState(null);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+
+    const calendarRef = useRef(null);
+    const wrapperRef = useRef(null);
 
     /* ================= FETCH ================= */
     useEffect(() => {
@@ -29,7 +34,6 @@ const TaskCalendar = () => {
 
             setAssignedToMe(res.data.assignedToMe || []);
             setAssignedByMe(res.data.assignedByMe || []);
-            console.log("Calendar API response:", res.data);
         } catch (err) {
             console.error("Calendar fetch error:", err);
         }
@@ -44,6 +48,29 @@ const TaskCalendar = () => {
 
         window.addEventListener("mousemove", handleMove);
         return () => window.removeEventListener("mousemove", handleMove);
+    }, []);
+
+    /* ================= KEYBOARD ================= */
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.key === "Escape") {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+                setActiveTask(null);
+            }
+
+            if (e.key.toLowerCase() === "f") toggleFullScreen();
+            if (e.key.toLowerCase() === "t")
+                calendarRef.current?.getApi().today();
+            if (e.key === "ArrowLeft")
+                calendarRef.current?.getApi().prev();
+            if (e.key === "ArrowRight")
+                calendarRef.current?.getApi().next();
+        };
+
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     /* ================= DATA ================= */
@@ -71,6 +98,29 @@ const TaskCalendar = () => {
             }));
     }, [allTasks]);
 
+    /* ================= REAL FULLSCREEN ================= */
+    const toggleFullScreen = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await wrapperRef.current.requestFullscreen();
+                document.body.classList.add("calendar-fs-active");
+                setIsFullScreen(true);
+            } else {
+                await document.exitFullscreen();
+                document.body.classList.remove("calendar-fs-active");
+                setIsFullScreen(false);
+            }
+
+            // force calendar resize after transition
+            setTimeout(() => {
+                calendarRef.current?.getApi().updateSize();
+                window.dispatchEvent(new Event("resize"));
+            }, 300);
+        } catch (err) {
+            console.error("Fullscreen error:", err);
+        }
+    };
+
     /* ================= DRAG FEEDBACK ================= */
     const handleDragStart = () => {
         document.body.classList.add("calendar-dragging");
@@ -81,13 +131,30 @@ const TaskCalendar = () => {
     };
 
     return (
-        <div className="calendar-glass-container">
-            <h1 className="calendar-title">My Task Calendar</h1>
+        <div
+            ref={wrapperRef}
+            className={`calendar-shell ${isFullScreen ? "fullscreen" : ""}`}
+        >
+            {/* ================= HEADER ================= */}
+            <div className="calendar-topbar">
+                <h1 className="calendar-title">My Task Calendar</h1>
 
+                <div className="calendar-actions">
+                    <button
+                        onClick={toggleFullScreen}
+                        className="calendar-icon-btn"
+                        title="Toggle Fullscreen (F)"
+                    >
+                        {isFullScreen ? <FiMinimize /> : <FiMaximize />}
+                    </button>
+                </div>
+            </div>
+
+            {/* ================= CALENDAR ================= */}
             <FullCalendar
+                ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
-                initialDate={events[0]?.start}
                 headerToolbar={{
                     left: "prev,next today",
                     center: "title",
@@ -97,6 +164,8 @@ const TaskCalendar = () => {
                 editable
                 selectable
                 height="auto"
+                dayMaxEvents={3}
+                nowIndicator
 
                 /* ================= TOOLTIP ================= */
                 eventDidMount={(info) => {
@@ -155,6 +224,13 @@ const TaskCalendar = () => {
             {activeTask && (
                 <div className="calendar-modal-backdrop">
                     <div className="calendar-modal">
+                        <button
+                            className="modal-close"
+                            onClick={() => setActiveTask(null)}
+                        >
+                            <FiX />
+                        </button>
+
                         <h2>{activeTask.title}</h2>
                         <p><b>Status:</b> {activeTask.status}</p>
                         <p><b>Urgency:</b> {activeTask.urgency}</p>
@@ -162,10 +238,9 @@ const TaskCalendar = () => {
                         <p><b>Assigned By:</b> {activeTask.assignedBy}</p>
                         <p><b>Description:</b> {activeTask.description}</p>
                         <p>
-                            <b>Due:</b> {moment(activeTask.dueDate).format("DD MMM YYYY")}
+                            <b>Due:</b>{" "}
+                            {moment(activeTask.dueDate).format("DD MMM YYYY")}
                         </p>
-
-                        <button onClick={() => setActiveTask(null)}>Close</button>
                     </div>
                 </div>
             )}
