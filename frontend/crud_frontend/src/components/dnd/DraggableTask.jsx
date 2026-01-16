@@ -4,10 +4,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { FiEdit2, FiTrash2, FiCheck, FiX, FiSave } from "react-icons/fi";
 import api from "../../api/axios";
 
-const DraggableTask = ({ task, userId }) => {
+const DraggableTask = ({ task, userId, onTaskUpdated, onTaskDeleted }) => {
     const [showActions, setShowActions] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState(task.taskTitle);
+    const [loading, setLoading] = useState(false);
 
     const {
         attributes,
@@ -17,11 +18,11 @@ const DraggableTask = ({ task, userId }) => {
         transition,
         isDragging,
     } = useSortable({
-        id: `task-${task._id}`,   // 🔥 prefix id
+        id: `task-${task._id}`,
         data: {
             type: "task",
-            task,
-            userId,   // source card
+            task: task,        // ✅ MUST exist
+            userId: userId,
         },
     });
 
@@ -31,22 +32,70 @@ const DraggableTask = ({ task, userId }) => {
         willChange: "transform",
     };
 
+    const token = localStorage.getItem("token");
 
-    /* ---------------- SAVE EDIT ---------------- */
+    /* ================= SAVE EDIT ================= */
     const handleSaveEdit = async () => {
+        if (!editTitle.trim()) return;
+
         try {
-            const token = localStorage.getItem("token");
+            setLoading(true);
 
             const res = await api.patch(
-                `/updatetask/${task._id}`,
+                `/user/updatetask/${task._id}`,
                 { taskTitle: editTitle },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            onTaskUpdated?.(res.data.task);
             setIsEditing(false);
             setShowActions(false);
         } catch (err) {
             console.error("Edit task error:", err);
+            alert(err.response?.data?.message || "Update failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /* ================= MARK COMPLETE ================= */
+    const handleMarkComplete = async () => {
+        try {
+            setLoading(true);
+
+            const res = await api.patch(
+                `/user/updatetask/${task._id}`,
+                { status: "Completed" },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            onTaskUpdated?.(res.data.task);
+            setShowActions(false);
+        } catch (err) {
+            console.error("Complete task error:", err);
+            alert(err.response?.data?.message || "Not allowed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /* ================= DELETE ================= */
+    const handleDelete = async () => {
+        if (!window.confirm("Delete this task?")) return;
+
+        try {
+            setLoading(true);
+
+            await api.delete(`/user/deletetask/${task._id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            onTaskDeleted?.(task._id);
+        } catch (err) {
+            console.error("Delete task error:", err);
+            alert(err.response?.data?.message || "Delete failed");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -56,7 +105,7 @@ const DraggableTask = ({ task, userId }) => {
             style={style}
             {...attributes}
             {...listeners}
-            className={` task-card
+            className={`task-card
                 group relative
                 px-3 py-2 rounded-xl
                 bg-white/10 border border-white/10
@@ -68,7 +117,7 @@ const DraggableTask = ({ task, userId }) => {
                 }
             `}
         >
-            {/* ---------------- VIEW MODE ---------------- */}
+            {/* ================= VIEW MODE ================= */}
             {!isEditing && (
                 <>
                     <div className="flex justify-between items-center gap-2">
@@ -81,7 +130,7 @@ const DraggableTask = ({ task, userId }) => {
                             </div>
                         </div>
 
-                        {/* EDIT TOGGLE */}
+                        {/* ACTION TOGGLE */}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -112,9 +161,10 @@ const DraggableTask = ({ task, userId }) => {
                     >
                         {/* COMPLETE */}
                         <button
+                            disabled={loading}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                console.log("Mark complete:", task._id);
+                                handleMarkComplete();
                             }}
                             className="
                                 p-2 rounded-lg
@@ -129,6 +179,7 @@ const DraggableTask = ({ task, userId }) => {
 
                         {/* EDIT */}
                         <button
+                            disabled={loading}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsEditing(true);
@@ -146,9 +197,10 @@ const DraggableTask = ({ task, userId }) => {
 
                         {/* DELETE */}
                         <button
+                            disabled={loading}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                console.log("Delete task:", task._id);
+                                handleDelete();
                             }}
                             className="
                                 p-2 rounded-lg
@@ -164,7 +216,7 @@ const DraggableTask = ({ task, userId }) => {
                 </>
             )}
 
-            {/* ---------------- EDIT MODE ---------------- */}
+            {/* ================= EDIT MODE ================= */}
             {isEditing && (
                 <div className="
                     mt-1 p-2 rounded-lg
@@ -205,6 +257,7 @@ const DraggableTask = ({ task, userId }) => {
 
                         {/* SAVE */}
                         <button
+                            disabled={loading}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleSaveEdit();

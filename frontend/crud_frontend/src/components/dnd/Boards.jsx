@@ -19,6 +19,7 @@ import {
     arrayMove,
 } from "@dnd-kit/sortable";
 import api from "../../api/axios";
+import UserActionModal from "./UserActionModal";
 
 const dropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({
@@ -43,6 +44,9 @@ const Boards = () => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [activeDragTask, setActiveDragTask] = useState(null);
+
+    const [activeUser, setActiveUser] = useState(null);
+    const [userActionMode, setUserActionMode] = useState(null);
 
     /* ---------------- FETCH ---------------- */
     useEffect(() => {
@@ -78,15 +82,29 @@ const Boards = () => {
         fetchData();
     }, []);
 
+    const handleTaskUpdated = (updatedTask) => {
+        setTasks((prev) =>
+            prev.map((t) =>
+                t._id === updatedTask._id ? updatedTask : t
+            )
+        );
+    };
+
+    const handleTaskDeleted = (taskId) => {
+        setTasks((prev) => prev.filter((t) => t._id !== taskId));
+    };
+
+
     const handleDeleteUser = async (userId, userName) => {
         if (!window.confirm(`Delete ${userName}?`)) return;
 
         try {
             const token = localStorage.getItem("token");
 
-            await api.delete(`/user/${userId}`, {
+            await api.delete(`/user/user/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+
 
             setExistingUserData((prev) =>
                 prev.filter((u) => u._id !== userId)
@@ -206,16 +224,26 @@ const Boards = () => {
            2) TASK → USER (REASSIGN)
         ================================= */
         if (activeData?.type === "task" && overData?.type === "user") {
-            const task = activeData.task;
+
+            const task = activeData?.task;
+
+            // 🛡️ HARD GUARD – prevents crash
+            if (!task || !task.assignedTo) {
+                console.warn("Drag data missing task:", activeData);
+                return;
+            }
+
             const newUserId = overData.userId;
 
+            // same user → no-op
             if (task.assignedTo._id === newUserId) return;
 
             try {
                 const token = localStorage.getItem("token");
 
+                // ✅ CORRECT ENDPOINT FOR REASSIGN
                 const res = await api.patch(
-                    `/tasks/reassign/${task._id}`,
+                    `/user/tasks/reassign/${task._id}`,
                     { newUserId },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -233,6 +261,7 @@ const Boards = () => {
                         t._id === updatedTask._id ? updatedTask : t
                     )
                 );
+
             } catch (err) {
                 console.error("Reassign task error:", err);
             }
@@ -257,6 +286,7 @@ const Boards = () => {
         }
     };
 
+
     /* ---------------- UNDO ---------------- */
     const handleUndo = async () => {
         if (!lastAction) return;
@@ -265,7 +295,7 @@ const Boards = () => {
             const token = localStorage.getItem("token");
 
             const res = await api.patch(
-                `/tasks/reassign/${lastAction.taskId}`,
+                `/user/tasks/reassign/${lastAction.taskId}`,
                 { newUserId: lastAction.prevAssignedTo },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -299,6 +329,15 @@ const Boards = () => {
         console.log("Task for", id, taskInputs[id]);
         setTaskInputs((p) => ({ ...p, [id]: "" }));
         closeAddTaskForm(id);
+    };
+    const openUserModal = (mode, user) => {
+        setActiveUser(user);
+        setUserActionMode(mode);
+    };
+
+    const closeUserModal = () => {
+        setActiveUser(null);
+        setUserActionMode(null);
     };
 
     /* ---------------- SKELETON ---------------- */
@@ -365,8 +404,23 @@ const Boards = () => {
                                             >
                                                 <TaskCard
                                                     userName={user.name}
-                                                    onDeleteUser={handleDeleteUser}
                                                     userId={id}
+
+                                                    onViewUser={(uid) => {
+                                                        const u = existingUserData.find(x => x._id === uid);
+                                                        openUserModal("view", u);
+                                                    }}
+
+                                                    onEditUser={(uid) => {
+                                                        const u = existingUserData.find(x => x._id === uid);
+                                                        openUserModal("edit", u);
+                                                    }}
+
+                                                    onDeleteUserFromMenu={(uid) => {
+                                                        const u = existingUserData.find(x => x._id === uid);
+                                                        openUserModal("delete", u);
+                                                    }}
+
                                                     tasks={getTasksForUser(id)}
                                                     isTaskFormOpen={!!openTaskForms[id]}
                                                     openAddTaskForm={openAddTaskForm}
@@ -374,7 +428,10 @@ const Boards = () => {
                                                     taskInput={taskInputs[id] || ""}
                                                     onTaskInputChange={handleTaskInputChange}
                                                     handleTaskSubmit={handleTaskSubmit}
+                                                    onTaskUpdated={handleTaskUpdated}
+                                                    onTaskDeleted={handleTaskDeleted}
                                                 />
+
                                             </SortableContext>
                                         </DragableBox>
                                     </DropZone>
@@ -413,7 +470,24 @@ const Boards = () => {
                         ) : null}
                     </DragOverlay>
                 </DndContext>
+
             </div>
+            <UserActionModal
+                isOpen={!!activeUser}
+                mode={userActionMode}
+                user={activeUser}
+                onClose={closeUserModal}
+                onUpdated={(updatedUser) => {
+                    setExistingUserData(prev =>
+                        prev.map(u => u._id === updatedUser._id ? updatedUser : u)
+                    );
+                }}
+                onDeleted={(id) => {
+                    setExistingUserData(prev => prev.filter(u => u._id !== id));
+                    setCardOrder(prev => prev.filter(uid => uid !== id));
+                }}
+            />
+
         </div>
     );
 };

@@ -17,7 +17,13 @@ const TaskCard = ({
     taskInput,
     onTaskInputChange,
     handleTaskSubmit,
-    onDeleteUser
+    onDeleteUser,
+    onTaskUpdated,
+    onTaskDeleted,
+    onViewUser,
+    onEditUser,
+    onDeleteUserFromMenu,
+
 }) => {
     // 🔥 IMPORTANT: ids must match DraggableTask sortable ids
     const taskIds = tasks.map((t) => t._id);
@@ -38,14 +44,15 @@ const TaskCard = ({
                     onEdit={(id) => console.log("EDIT USER", id)}
                     onDelete={(id, name) => console.log("DELETE USER", id, name)}
                 /> */}
-
                 <UserActionMenu
                     userId={userId}
                     userName={userName}
-                    onView={(id) => console.log("VIEW USER", id)}
-                    onEdit={(id) => console.log("EDIT USER", id)}
-                    onDelete={(id, name) => onDeleteUser(id, name)}
+                    onView={(id) => onViewUser(id)}
+                    onEdit={(id) => onEditUser(id)}
+                    onDelete={(id) => onDeleteUserFromMenu(id)}
                 />
+
+
 
             </div>
 
@@ -66,8 +73,11 @@ const TaskCard = ({
                             key={task._id}
                             task={task}
                             userId={userId}
+                            onTaskUpdated={onTaskUpdated}
+                            onTaskDeleted={onTaskDeleted}
                         />
                     ))}
+
                 </div>
             </SortableContext>
 
