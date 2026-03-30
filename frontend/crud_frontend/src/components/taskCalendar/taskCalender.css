@@ -232,3 +232,145 @@ nav {
 .calendar-shell.fullscreen {
     padding-top: 0;
 }
+
+/* ================= EVENT CONTENT ================= */
+.fc-task-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fc-task-title {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* ================= DUE BADGE ================= */
+.fc-due-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    width: fit-content;
+    color: white;
+    font-weight: 600;
+}
+
+/* Normal */
+.due-normal {
+    background: #4f46e5;
+}
+
+/* Due soon */
+.due-soon {
+    background: #f59e0b;
+    animation: pulseGlow 1.5s infinite;
+}
+
+/* Overdue */
+.due-overdue {
+    background: #dc2626;
+    animation: pulseGlowStrong 1.2s infinite;
+}
+
+/* ================= MODAL ================= */
+.modal-due {
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+}
+
+/* ================= PULSE ================= */
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    }
+}
+
+@keyframes pulseGlowStrong {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.8);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+    }
+}
+
+.calendar-loader {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* ================= SKELETON CALENDAR ================= */
+.calendar-skeleton {
+    padding: 16px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.skeleton-header {
+    height: 32px;
+    width: 40%;
+    margin: 0 auto 16px;
+    border-radius: 8px;
+    background: linear-gradient(90deg,
+            #e5e7eb 25%,
+            #f3f4f6 37%,
+            #e5e7eb 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.skeleton-cell {
+    height: 80px;
+    border-radius: 10px;
+    background: linear-gradient(90deg,
+            #e5e7eb 25%,
+            #f3f4f6 37%,
+            #e5e7eb 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes shimmer {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

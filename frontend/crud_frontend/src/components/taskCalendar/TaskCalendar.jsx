@@ -15,6 +15,10 @@ const TaskCalendar = () => {
     const [assignedByMe, setAssignedByMe] = useState([]);
     const [activeTask, setActiveTask] = useState(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    /* ✅ LOADER STATE */
+    const [loading, setLoading] = useState(false);
 
     const calendarRef = useRef(null);
     const wrapperRef = useRef(null);
@@ -26,6 +30,8 @@ const TaskCalendar = () => {
 
     async function fetchData() {
         try {
+            setLoading(true); // ✅ start loader
+
             const res = await api.get("/user/mytasks", {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -36,6 +42,9 @@ const TaskCalendar = () => {
             setAssignedByMe(res.data.assignedByMe || []);
         } catch (err) {
             console.error("Calendar fetch error:", err);
+        } finally {
+            setLoading(false); // ✅ stop loader
+            setIsInitialLoad(false);
         }
     }
 
@@ -111,7 +120,6 @@ const TaskCalendar = () => {
                 setIsFullScreen(false);
             }
 
-            // force calendar resize after transition
             setTimeout(() => {
                 calendarRef.current?.getApi().updateSize();
                 window.dispatchEvent(new Event("resize"));
@@ -150,75 +158,92 @@ const TaskCalendar = () => {
                 </div>
             </div>
 
+            {/* ================= LOADER ================= */}
+            {/* ================= SKELETON LOADER ================= */}
+            {loading && (
+                <div className="calendar-skeleton">
+                    <div className="skeleton-header" />
+                    <div className="skeleton-grid">
+                        {Array.from({ length: 35 }).map((_, i) => (
+                            <div key={i} className="skeleton-cell" />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {loading && (
+                <div className="calendar-loader">
+                    <p>Loading tasks...</p>
+                </div>
+            )}
+
             {/* ================= CALENDAR ================= */}
-            <FullCalendar
-                ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView="dayGridMonth"
-                headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth,timeGridWeek,timeGridDay",
-                }}
-                events={events}
-                editable
-                selectable
-                height="auto"
-                dayMaxEvents={3}
-                nowIndicator
+            {!isInitialLoad && !loading && (
+                <FullCalendar
+                    ref={calendarRef}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    headerToolbar={{
+                        left: "prev,next today",
+                        center: "title",
+                        right: "dayGridMonth,timeGridWeek,timeGridDay",
+                    }}
+                    events={events}
+                    editable
+                    selectable
+                    height="auto"
+                    dayMaxEvents={3}
+                    nowIndicator
 
-                /* ================= TOOLTIP ================= */
-                eventDidMount={(info) => {
-                    const e = info.event.extendedProps;
+                    eventDidMount={(info) => {
+                        const e = info.event.extendedProps;
 
-                    tippy(info.el, {
-                        content: `
-              <div style="font-size:12px">
-                <b>${info.event.title}</b><br/>
-                <b>Status:</b> ${e.status}<br/>
-                <b>Urgency:</b> ${e.urgency}<br/>
-                <b>To:</b> ${e.assignedTo || "-"}<br/>
-                <b>By:</b> ${e.assignedBy || "-"}
-              </div>
-            `,
-                        allowHTML: true,
-                        theme: "light-border",
-                    });
-                }}
+                        tippy(info.el, {
+                            content: `
+                              <div style="font-size:12px">
+                                <b>${info.event.title}</b><br/>
+                                <b>Status:</b> ${e.status}<br/>
+                                <b>Urgency:</b> ${e.urgency}<br/>
+                                <b>To:</b> ${e.assignedTo || "-"}<br/>
+                                <b>By:</b> ${e.assignedBy || "-"}
+                              </div>
+                            `,
+                            allowHTML: true,
+                            theme: "light-border",
+                        });
+                    }}
 
-                /* ================= CLICK → MODAL ================= */
-                eventClick={(info) => {
-                    setActiveTask({
-                        title: info.event.title,
-                        ...info.event.extendedProps,
-                        dueDate: info.event.start,
-                    });
-                }}
+                    eventClick={(info) => {
+                        setActiveTask({
+                            title: info.event.title,
+                            ...info.event.extendedProps,
+                            dueDate: info.event.start,
+                        });
+                    }}
 
-                /* ================= DRAG UX ================= */
-                eventDragStart={handleDragStart}
-                eventDragStop={handleDragStop}
+                    eventDragStart={handleDragStart}
+                    eventDragStop={handleDragStop}
 
-                /* ================= UPDATE DATE ================= */
-                eventDrop={async (info) => {
-                    const newDate = moment(info.event.start).toISOString();
+                    eventDrop={async (info) => {
+                        const newDate = moment(info.event.start).toISOString();
 
-                    try {
-                        await api.patch(
-                            `/tasks/update/${info.event.id}`,
-                            { dueDate: newDate },
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                                },
-                            }
-                        );
-                    } catch (err) {
-                        console.error("Failed to update due date");
-                        info.revert();
-                    }
-                }}
-            />
+                        try {
+                            await api.patch(
+                                `/tasks/update/${info.event.id}`,
+                                { dueDate: newDate },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                                    },
+                                }
+                            );
+                        } catch (err) {
+                            console.error("Failed to update due date");
+                            info.revert();
+                        }
+                    }}
+                />
+            )}
 
             {/* ================= MODAL ================= */}
             {activeTask && (

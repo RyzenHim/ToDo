@@ -12,10 +12,7 @@ router.patch('/update', auth, userController.update)
 router.get('/mytasks', auth, userController.mytasks)
 router.patch('/updatetask/:id', auth, userController.updateTask)
 router.post('/practice', auth, userController.practice)
-router.delete(
-    "/deletetask/:id",
-    auth,
-    userController.deleteTask
+router.delete("/deletetask/:id", auth, userController.deleteTask
 );
 router.get("/getAllTasks", auth, userController.getAllTasks);
 router.patch("/tasks/reassign/:taskId", auth, userController.reassignTask);

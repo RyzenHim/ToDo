@@ -75,7 +75,7 @@ const NavBar = () => {
     /* ================= LOGOUT ================= */
     const handleLogOut = () => {
         localStorage.removeItem("token");
-        navigate("/user");
+        navigate("/user/login");
     };
 
     /* ================= LINK STYLE ================= */

@@ -5,7 +5,7 @@ const UserActionMenu = ({ userId, userName, onEdit, onDelete, onView }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
-    // close on outside click
+    // close on outside click   
     useEffect(() => {
         const handler = (e) => {
             if (ref.current && !ref.current.contains(e.target)) {
